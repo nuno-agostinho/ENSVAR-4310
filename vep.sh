@@ -3,7 +3,7 @@
 #BSUB -o logs/vep-gff3-%J.out
 
 # Create directories if they do not exist: output and logs
-mkdir -p output logs
+mkdir -p output2 logs
 
 # Params
 dataDir=/nfs/production/flicek/ensembl/variation/data
@@ -17,10 +17,12 @@ vcf=$vepDir/examples/homo_sapiens_GRCh38.vcf
 # Functions
 vep_run () {
     assembly=GRCh38
-    echo " -> Running VEP with $file (perl$perlVersion, $type, $assembly, $format)"
+    echo " -> Running VEP with $annot (perl$perlVersion, $type, $assembly, $format)"
     plenv local $perlVersion
+
+    input=$(basename $annot)
     perl $vep --i $vcf \
-              --o output/${LSB_JOBNAME}-${LSB_JOBID}.$perlVersion.$type.$assembly.$format \
+              --o output2/${LSB_JOBNAME}-${LSB_JOBID}.$perlVersion.$type.$input.$assembly.$format \
               --$format \
               --assembly $assembly \
               --force_overwrite \
@@ -43,23 +45,19 @@ vep_database () {
             $@
 }
 
-#assembly=GRCh37
-#perlVersion=5.14.4
-#format=tab
-#vep_database
-
+vcf=NA12878.vcf.gz
 for run in vep_cache vep_database; do
     for perlVersion in 5.14.4 5.26.2; do
         for format in json tab vcf; do
-            for file in $(ls input/*); do
-                ext=$(echo "${file##*.}" | grep -Po "[A-Za-z]+")
-                $run --$ext $file
+            for annot in input/*gz; do
+                ext=${annot%.*}
+                ext=$(echo "${ext##*.}" | grep -Po "[A-Za-z]+")
+                $run --$ext $annot
             done
         done
     done
 done
 
-#vcf=input/NA12878.vcf.gz
 #perlVersion=5.14.4
 #format=tab
 #vep_cache
