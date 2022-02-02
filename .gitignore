@@ -1,0 +1,6 @@
+.nextflow*
+.perl-version
+reports/
+work/
+input/
+output/
