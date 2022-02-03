@@ -9,20 +9,15 @@ params.vep      = "/hps/software/users/ensembl/repositories/nuno/ensembl-vep/vep
 params.cacheDir = "/nfs/production/flicek/ensembl/variation/data/VEP"
 params.fasta    = "/nfs/production/flicek/ensembl/variation/data/Homo_sapiens.GRCh38.dna.toplevel.fa.gz"
 params.vcf      = "/nfs/production/flicek/ensembl/variation/data/PlatinumGenomes/NA12878.vcf.gz"
-params.annot    = Channel.fromPath( "input/annotation/*.gz" )
-
-// to pass flags in CLI besides the ones used as baseline, use double quotes
-// and add a space somewhere inside the string
-//   e.g. nextflow run main.nf --flags "--regulatory "
-params.flags     = null 
+params.annot    = Channel.fromPath( "input/annotation_updated/*.gz" )
 
 process vep {
-    tag "$perlVersion $annot.baseName $type"
+    tag "$perlVersion $annot.baseName $type $format"
     publishDir 'output'
 
     time '6h'
-    memory { 8.GB * task.attempt }
-    errorStrategy 'retry'
+    memory '16GB'
+    errorStrategy 'finish'
 
     input:
         val perlVersion
@@ -32,7 +27,6 @@ process vep {
         path fasta
         path cacheDir
         each annot
-        val type
     output:
         file '*'
     """
@@ -42,18 +36,16 @@ process vep {
     ext=\${ext%.*}
     ext=\$(echo \${ext##*.} | grep -Po "[A-Za-z]+")
 
-    if [[ "${type}" = "database" ]]; then
-        args="--database"
-    else
-        args="--cache --dir_cache ${cacheDir} --cache_version 102 --offline"
-    fi
-
     name=vep-\$( echo "${perlVersion} ${annot.baseName} ${type}" | sed 's/-//g' | sed 's/ /-/g' )
     name=\${name}-\${LSB_JOBID}
     perl ${vep} \
          --i $vcf \
-         --o \${name}.txt \
+         --o \${name}.${format} --${format} \
          --assembly GRCh38 \
+         --cache \
+         --dir_cache ${cacheDir} \
+         --cache_version 104 \
+         --offline \
          --fasta $fasta \
          --\${ext} ${annot} \
          \${args} > \${name}.out 2>&1
@@ -61,9 +53,8 @@ process vep {
 }
 
 workflow {
-    type = Channel.from( "cache", "database" )
     vep( params.perl, params.vep, params.format, params.vcf, params.fasta,
-         params.cacheDir, params.annot, type )
+         params.cacheDir, params.annot )
 }
 
 // Print summary
