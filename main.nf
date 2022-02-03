@@ -16,7 +16,7 @@ process vep {
     publishDir 'output'
 
     time '6h'
-    memory '16GB'
+    memory '4GB'
     errorStrategy 'finish'
 
     input:
