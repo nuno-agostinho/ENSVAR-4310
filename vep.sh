@@ -45,11 +45,11 @@ vep_database () {
             $@
 }
 
-vcf=NA12878.vcf.gz
+#vcf=NA12878.vcf.gz
 for run in vep_cache vep_database; do
     for perlVersion in 5.14.4 5.26.2; do
         for format in json tab vcf; do
-            for annot in input/*gz; do
+            for annot in input/annotation/*gz; do
                 ext=${annot%.*}
                 ext=$(echo "${ext##*.}" | grep -Po "[A-Za-z]+")
                 $run --$ext $annot

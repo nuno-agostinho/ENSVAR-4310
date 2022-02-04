@@ -11,3 +11,7 @@ bsub -M 4000 nextflow run main.nf
 ```
 
 VEP output files and logs are saved in folder `output`.
+
+# Creating test datasets for unit tests
+
+Run `bsub < scripts/create-test-data.sh`
